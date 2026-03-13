@@ -266,7 +266,21 @@ def preparar_features(df: pd.DataFrame):
     # ── Definir features (X) y target (y) ────────────────────────────────────
     # X = lo que entra a la red (3 features)
     # y = lo que queremos predecir (1 valor: precio)
-    X = df[["brand_encoded", "category_encoded", "cluster_id"]].values
+    encoder_manufacturer = LabelEncoder()
+    df["manufacturer_encoded"] = encoder_manufacturer.fit_transform(
+        df["manufacturer"].astype(str)
+    )
+
+    encoder_primary = LabelEncoder()
+    df["primary_category_encoded"] = encoder_primary.fit_transform(
+        df["primary_category"].astype(str)
+    )
+
+    print(f"   Fabricantes únicos   : {len(encoder_manufacturer.classes_):,}")
+    print(f"   Cat. primarias únicas: {len(encoder_primary.classes_):,}")
+
+    X = df[["brand_encoded", "category_encoded", "cluster_id",
+        "manufacturer_encoded", "primary_category_encoded"]].values
     y = df["price"].values.reshape(-1, 1)  # reshape para que sea columna
 
     print(f"\n   Features (X) shape: {X.shape}  → {X.shape[0]:,} productos × {X.shape[1]} features")
@@ -341,7 +355,7 @@ def construir_modelo(learning_rate: float) -> keras.Model:
 
         # Capa de entrada — recibe 3 features
         # input_shape=(3,) indica que cada muestra tiene 3 valores
-        layers.Input(shape=(3,)),
+        layers.Input(shape=(5,)),
 
         # Capa oculta 1 — 64 neuronas con activación ReLU
         # Dense = todas las neuronas conectadas a todas las de la capa anterior
