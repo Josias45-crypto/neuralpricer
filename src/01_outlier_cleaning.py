@@ -16,123 +16,129 @@ FÓRMULA MATEMÁTICA APLICADA:
     ─────────────────────────────────────────────────────────────────
     Desviación estándar poblacional:
  
-              sigma = sqrt( sum(xi - mu)^2 / N )
+              σ = √( Σ(xᵢ - μ)² / N )
  
     Donde:
-        xi = precio individual de cada producto
-        mu = media aritmética de precios en la categoría
+        xᵢ = precio individual de cada producto
+        μ  = media aritmética de precios en la categoría
         N  = total de productos en la categoría
-        sigma = desviación estándar
+        σ  = desviación estándar (qué tanto se dispersan los precios)
  
     Rango válido de precios por categoría:
-        [ mu - 3*sigma ,  mu + 3*sigma ]
+        [ μ - 3σ ,  μ + 3σ ]
  
     Todo precio fuera de ese rango es un OUTLIER y se elimina.
     ─────────────────────────────────────────────────────────────────
  
-POR QUÉ 3 DESVIACIONES ESTÁNDAR:
-    Regla Empírica (Campana de Gauss):
-        - mu +- 1sigma cubre el 68.27% de los datos
-        - mu +- 2sigma cubre el 95.45% de los datos
-        - mu +- 3sigma cubre el 99.73% de los datos
-    Precio fuera de mu +- 3sigma ocurre solo el 0.27% del tiempo.
+¿POR QUÉ 3 DESVIACIONES ESTÁNDAR?
+    Por la Regla Empírica (Campana de Gauss):
+        - μ ± 1σ cubre el 68.27% de los datos
+        - μ ± 2σ cubre el 95.45% de los datos
+        - μ ± 3σ cubre el 99.73% de los datos
+    Cualquier precio fuera de μ ± 3σ ocurre solo el 0.27% del tiempo
+    en una distribución normal — casi seguro es un error o fraude.
  
 REGLA DE NEGOCIO (del documento):
-    PROHIBIDO : if precio < 10  (condicional arbitrario)
-    OBLIGATORIO: usar la fórmula estadística formal por categoría
- 
-DATASET UTILIZADO:
-    Amazon Electronics Products & Pricing (Kaggle - Datafiniti)
-    Columnas mapeadas:
-        'Product Name'  -> product_name
-        'Selling Price' -> price
-        'Brand Name'    -> brand
-        'Category'      -> category
+    ❌ PROHIBIDO: if precio < 10  (condicional arbitrario)
+    ✅ OBLIGATORIO: usar la fórmula estadística formal por categoría
  
 ENTRADAS:
     - data/raw/electronics.csv
  
 SALIDAS:
-    - data/processed/clean.csv
+    - data/processed/clean.csv  (dataset sin outliers)
+    - Reporte en consola con estadísticas del proceso
  
 DEPENDENCIAS:
     pip install pandas numpy python-dotenv
 ================================================================================
 """
  
-# ------------------------------------------------------------------------------
+# ──────────────────────────────────────────────────────────────────────────────
 # IMPORTACIONES
-# ------------------------------------------------------------------------------
-import os
-import sys
+# Cargamos las librerías necesarias para este script
+# ──────────────────────────────────────────────────────────────────────────────
  
-import re
+import os           # Para manejar rutas del sistema operativo
+import sys          # Para salir del programa con mensajes de error
  
-import numpy as np
-import pandas as pd
-from dotenv import load_dotenv
+import numpy as np  # Operaciones matemáticas y estadísticas
+import pandas as pd # Manipulación de datos en tablas (DataFrames)
+ 
+from dotenv import load_dotenv  # Carga variables de entorno desde .env
  
  
-# ------------------------------------------------------------------------------
-# CONFIGURACIÓN — variables desde .env
-# Nunca se hardcodean rutas en el código (buena práctica)
-# ------------------------------------------------------------------------------
-load_dotenv()
+# ──────────────────────────────────────────────────────────────────────────────
+# CONFIGURACIÓN
+# Cargamos las variables de entorno definidas en el archivo .env
+# Esto evita tener rutas hardcodeadas en el código (buena práctica)
+# ──────────────────────────────────────────────────────────────────────────────
  
+load_dotenv()  # Lee el archivo .env y carga las variables en el entorno
+ 
+# Leemos las rutas desde .env — si no existen usamos valores por defecto
 DATA_RAW_PATH       = os.getenv("DATA_RAW_PATH",       "data/raw/electronics.csv")
 DATA_PROCESSED_PATH = os.getenv("DATA_PROCESSED_PATH", "data/processed/clean.csv")
-OUTLIER_THRESHOLD   = float(os.getenv("OUTLIER_THRESHOLD", "3"))
+OUTLIER_THRESHOLD   = float(os.getenv("OUTLIER_THRESHOLD", "3"))  # El "3" de μ ± 3σ
  
  
-# ------------------------------------------------------------------------------
+# ──────────────────────────────────────────────────────────────────────────────
 # COLUMNAS REQUERIDAS (RF-01 del documento de requerimientos)
-# ------------------------------------------------------------------------------
-COLUMNAS_REQUERIDAS = ["Product Name", "Selling Price", "Brand Name", "Category"]
+# El dataset DEBE contener estas 4 columnas mínimas para que el sistema funcione
+# ──────────────────────────────────────────────────────────────────────────────
  
-# Traducción: nombre en el CSV original -> nombre estándar del proyecto
+COLUMNAS_REQUERIDAS = ["name", "price", "brand", "categories"]
+
 MAPEO_COLUMNAS = {
-    "Product Name"  : "product_name",
-    "Selling Price" : "price",
-    "Brand Name"    : "brand",
-    "Category"      : "category",
+    "name"       : "product_name",
+    "price"      : "price",
+    "brand"      : "brand",
+    "categories" : "category",
 }
  
- 
-# ------------------------------------------------------------------------------
+# ──────────────────────────────────────────────────────────────────────────────
 # FUNCIÓN 1: cargar_dataset
-# ------------------------------------------------------------------------------
+# Responsabilidad: leer el CSV y validar que tenga las columnas requeridas
+# ──────────────────────────────────────────────────────────────────────────────
+ 
 def cargar_dataset(ruta: str) -> pd.DataFrame:
     """
     Carga el dataset CSV y valida que contenga las columnas mínimas requeridas.
  
-    Implementa RF-01: mostrar error descriptivo si falta alguna columna,
-    sin lanzar una excepción genérica de Python.
+    Esta función implementa el RF-01 del documento de requerimientos:
+    mostrar un error descriptivo si falta alguna columna, sin lanzar
+    una excepción genérica.
  
     Parámetros:
         ruta (str): Ruta al archivo CSV de entrada.
  
     Retorna:
-        pd.DataFrame: Dataset cargado con columnas validadas.
+        pd.DataFrame: Dataset cargado con las columnas validadas.
+ 
+    Lanza:
+        SystemExit: Si el archivo no existe o faltan columnas requeridas.
     """
  
-    # Verificar que el archivo existe antes de intentar abrirlo
+    # ── Verificar que el archivo existe ──────────────────────────────────────
     if not os.path.exists(ruta):
-        print(f"\nERROR: No se encontró el archivo en: {ruta}")
+        print(f"\n❌ ERROR: No se encontró el archivo en: {ruta}")
         print("   Asegúrate de haber colocado el CSV en data/raw/electronics.csv")
-        sys.exit(1)
+        sys.exit(1)  # Termina el programa con código de error
  
-    print(f"\nCargando dataset desde: {ruta}")
+    print(f"\n📂 Cargando dataset desde: {ruta}")
  
-    # low_memory=False evita warnings de tipos mixtos en columnas grandes
+    # ── Leer el CSV con pandas ────────────────────────────────────────────────
+    # low_memory=False evita warnings de tipos de datos mixtos en columnas grandes
     df = pd.read_csv(ruta, low_memory=False)
  
-    print(f"   Dataset cargado: {df.shape[0]:,} filas x {df.shape[1]} columnas")
+    print(f"   ✅ Dataset cargado: {df.shape[0]:,} filas × {df.shape[1]} columnas")
  
-    # Validar que existan las columnas requeridas (RF-01)
+    # ── Validar columnas requeridas (RF-01) ───────────────────────────────────
+    # Verificamos que existan las columnas que necesitamos antes de continuar
     columnas_faltantes = [col for col in COLUMNAS_REQUERIDAS if col not in df.columns]
  
     if columnas_faltantes:
-        print(f"\nERROR: Faltan columnas requeridas en el dataset:")
+        print(f"\n❌ ERROR: Faltan columnas requeridas en el dataset:")
         for col in columnas_faltantes:
             print(f"   - '{col}'")
         print(f"\n   Columnas disponibles en el CSV:")
@@ -140,20 +146,23 @@ def cargar_dataset(ruta: str) -> pd.DataFrame:
             print(f"   · {col}")
         sys.exit(1)
  
-    print(f"   Columnas requeridas verificadas correctamente")
+    print(f"   ✅ Columnas requeridas verificadas correctamente")
+ 
     return df
  
  
-# ------------------------------------------------------------------------------
+# ──────────────────────────────────────────────────────────────────────────────
 # FUNCIÓN 2: normalizar_columnas
-# ------------------------------------------------------------------------------
+# Responsabilidad: renombrar columnas del CSV al estándar del proyecto
+# ──────────────────────────────────────────────────────────────────────────────
+ 
 def normalizar_columnas(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Renombra las columnas del CSV original al estándar del proyecto
-    y limpia los tipos de datos.
+    Renombra las columnas del CSV original al estándar del proyecto y
+    limpia los tipos de datos básicos.
  
-    El precio viene como string con simbolos (ej: "$1,299.99").
-    Esta función lo convierte a float eliminando caracteres no numéricos.
+    El dataset de Kaggle usa nombres como 'prices.amountMax' pero el
+    proyecto trabaja con 'price'. Esta función hace esa traducción.
  
     Parámetros:
         df (pd.DataFrame): DataFrame con columnas originales del CSV.
@@ -162,187 +171,183 @@ def normalizar_columnas(df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: DataFrame con columnas renombradas y tipos limpios.
     """
  
-    print("\nNormalizando columnas...")
+    print("\n🔧 Normalizando columnas...")
  
-    # Seleccionar solo columnas necesarias — .copy() evita SettingWithCopyWarning
+    # ── Seleccionar solo las columnas que necesitamos ─────────────────────────
     df = df[list(MAPEO_COLUMNAS.keys())].copy()
+    # .copy() evita el SettingWithCopyWarning de pandas — buena práctica
  
-    # Renombrar al estándar del proyecto
+    # ── Renombrar columnas al estándar del proyecto ───────────────────────────
     df = df.rename(columns=MAPEO_COLUMNAS)
  
-    # Limpiar precios con función robusta
-    # El dataset tiene precios concatenados como '74.99249.99' (dos precios pegados)
-    # La función extrae solo el PRIMER precio válido de cada string
-    #
-    # Pasos:
-    #   1. Eliminar símbolo $ y comas de miles
-    #   2. Extraer el primer número con hasta 2 decimales usando regex
-    #   3. Convertir a float — si no hay número válido retorna None (NaN)
-    #
-    # Ejemplos:
-    #   '$74.99'      -> 74.99   (precio normal con símbolo)
-    #   '74.99249.99' -> 74.99   (dos precios pegados — tomamos el primero)
-    #   '1,299.99'    -> 1299.99 (precio con coma de miles)
-    #   ''            -> None    (vacío — se eliminará como NaN)
+    # ── Limpiar la columna de precios ─────────────────────────────────────────
+    # Los precios pueden venir como strings con símbolos ("$1,299.99")
+    # Los convertimos a números eliminando caracteres no numéricos
+    df["price"] = (
+        df["price"]
+        .astype(str)                        # Convertir a texto primero
+        .str.replace(r"[^\d.]", "", regex=True)  # Eliminar todo excepto dígitos y punto
+        .replace("", np.nan)                # Strings vacíos → NaN (valor nulo)
+        .astype(float)                      # Convertir a número decimal
+    )
  
-    def extraer_primer_precio(valor: str) -> float:
-        """
-        Extrae el primer precio numérico válido de un string.
-        Maneja precios concatenados, símbolos de moneda y comas de miles.
- 
-        Parámetros:
-            valor (str): String con el precio crudo del CSV.
- 
-        Retorna:
-            float: Primer precio válido encontrado, o None si no hay ninguno.
-        """
-        texto = str(valor).replace("$", "").replace(" ", "").replace(",", "")
-        # Regex: busca el primer número entero o decimal con hasta 2 decimales
-        match = re.match(r'^(\d+(?:\.\d{1,2})?)', texto)
-        if match:
-            return float(match.group(1))
-        return None
- 
-    df["price"] = df["price"].apply(extraer_primer_precio)
- 
-    # Limpiar textos — eliminar espacios extra y normalizar mayúsculas
+    # ── Limpiar textos en otras columnas ─────────────────────────────────────
     df["product_name"] = df["product_name"].astype(str).str.strip()
     df["brand"]        = df["brand"].astype(str).str.strip().str.title()
     df["category"]     = df["category"].astype(str).str.strip()
  
-    # Eliminar filas sin precio — sin precio no se puede calcular sigma
+    # ── Eliminar filas donde el precio es nulo (no se puede calcular σ) ───────
     filas_antes = len(df)
-    df          = df.dropna(subset=["price"])
-    eliminadas  = filas_antes - len(df)
+    df = df.dropna(subset=["price"])
+    filas_eliminadas = filas_antes - len(df)
  
-    print(f"   Columnas renombradas al estándar del proyecto")
-    print(f"   Precios convertidos a formato numérico")
-    print(f"   Filas con precio nulo eliminadas: {eliminadas:,}")
+    print(f"   ✅ Columnas renombradas al estándar del proyecto")
+    print(f"   ✅ Precios convertidos a formato numérico")
+    print(f"   ⚠️  Filas con precio nulo eliminadas: {filas_eliminadas:,}")
  
     return df
  
  
-# ------------------------------------------------------------------------------
+# ──────────────────────────────────────────────────────────────────────────────
 # FUNCIÓN 3: calcular_estadisticas_por_categoria
+# Responsabilidad: calcular μ y σ para cada categoría
 #
 # MATEMÁTICAS APLICADAS:
-#   Media aritmética:             mu = suma(xi) / N
-#   Desviación estándar pobl.:    sigma = sqrt( suma(xi - mu)^2 / N )
 #
-#   ddof=0 -> fórmula POBLACIONAL (dividir entre N)
-#   Usamos ddof=0 porque tenemos TODOS los productos de la categoría,
-#   no una muestra parcial.
-# ------------------------------------------------------------------------------
+#   Media aritmética (μ):
+#       μ = (Σ xᵢ) / N
+#
+#   Desviación estándar poblacional (σ):
+#       σ = √( Σ(xᵢ - μ)² / N )
+#
+#   Usamos ddof=0 en NumPy/Pandas para la fórmula POBLACIONAL
+#   (dividir entre N, no entre N-1 que sería la muestral)
+# ──────────────────────────────────────────────────────────────────────────────
+ 
 def calcular_estadisticas_por_categoria(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Calcula la media (mu) y desviación estándar (sigma) de precios
+    Calcula la media (μ) y desviación estándar (σ) de precios
     agrupados por categoría usando la fórmula estadística formal.
  
-    FÓRMULA:
-        mu    = suma(xi) / N
-        sigma = sqrt( suma(xi - mu)^2 / N )   [poblacional, ddof=0]
+    FÓRMULA IMPLEMENTADA:
+        μ = Σ(xᵢ) / N
+        σ = √( Σ(xᵢ - μ)² / N )
+ 
+    El parámetro ddof=0 indica desviación estándar POBLACIONAL
+    (dividimos entre N, no entre N-1).
  
     Parámetros:
         df (pd.DataFrame): DataFrame con columnas 'price' y 'category'.
  
     Retorna:
-        pd.DataFrame: DataFrame con columnas adicionales 'precio_media' (mu)
-                      y 'precio_std' (sigma) por categoría.
+        pd.DataFrame: DataFrame original con columnas adicionales:
+                      'precio_media' (μ) y 'precio_std' (σ) por categoría.
     """
  
-    print("\nCalculando estadísticas por categoría (mu y sigma)...")
+    print("\n📐 Calculando estadísticas por categoría (μ y σ)...")
  
-    # Agrupar por categoría y calcular mu y sigma
+    # ── Calcular μ y σ agrupado por categoría ────────────────────────────────
+    # groupby("category") agrupa todos los productos de la misma categoría
+    # ddof=0 → fórmula poblacional: dividir entre N (no entre N-1)
     estadisticas = df.groupby("category")["price"].agg(
-        precio_media="mean",
-        precio_std=lambda x: x.std(ddof=0)  # sigma poblacional
+        precio_media=("mean"),          # μ = media aritmética
+        precio_std  =lambda x: x.std(ddof=0)  # σ = desviación estándar poblacional
     ).reset_index()
  
-    # Merge: cada producto queda con la mu y sigma de SU categoría
+    # ── Unir las estadísticas al DataFrame original ───────────────────────────
+    # Hacemos un merge para que cada producto tenga la μ y σ de su categoría
     df = df.merge(estadisticas, on="category", how="left")
  
-    # Mostrar resumen de las primeras 10 categorías
-    print(f"\n   {'Categoría':<40} {'mu (media)':>12} {'sigma (std)':>12}")
-    print(f"   {'-'*40} {'-'*12} {'-'*12}")
-    for _, row in estadisticas.head(10).iterrows():
-        categoria = str(row["category"])[:39]
-        print(f"   {categoria:<40} {row['precio_media']:>12.2f} {row['precio_std']:>12.2f}")
+    # ── Mostrar resumen de estadísticas por categoría ─────────────────────────
+    print(f"\n   {'Categoría':<35} {'μ (media)':>12} {'σ (std)':>12} {'Productos':>10}")
+    print(f"   {'─'*35} {'─'*12} {'─'*12} {'─'*10}")
  
-    if len(estadisticas) > 10:
-        print(f"   ... y {len(estadisticas) - 10} categorías más")
+    for _, row in estadisticas.iterrows():
+        categoria = str(row["category"])[:34]  # Truncar nombre largo
+        print(f"   {categoria:<35} {row['precio_media']:>12.2f} {row['precio_std']:>12.2f}")
  
     return df
  
  
-# ------------------------------------------------------------------------------
+# ──────────────────────────────────────────────────────────────────────────────
 # FUNCIÓN 4: eliminar_outliers
+# Responsabilidad: aplicar el filtro μ ± 3σ por categoría
 #
 # MATEMÁTICAS APLICADAS:
-#   Límite inferior: Li = mu - (threshold * sigma)
-#   Límite superior: Ls = mu + (threshold * sigma)
-#   Precio VÁLIDO  : Li <= precio <= Ls
-#   Precio OUTLIER : precio < Li  o  precio > Ls
 #
-#   Con threshold=3: se conserva el 99.73% de precios válidos
-# ------------------------------------------------------------------------------
+#   Límite inferior:  Li = μ - (THRESHOLD × σ)
+#   Límite superior:  Ls = μ + (THRESHOLD × σ)
+#
+#   Un precio xᵢ es VÁLIDO si:  Li ≤ xᵢ ≤ Ls
+#   Un precio xᵢ es OUTLIER si: xᵢ < Li  ó  xᵢ > Ls
+#
+#   Con THRESHOLD = 3 (configurado en .env):
+#       Se conservan el 99.73% de precios válidos
+#       Se eliminan el 0.27% de precios atípicos
+# ──────────────────────────────────────────────────────────────────────────────
+ 
 def eliminar_outliers(df: pd.DataFrame, threshold: float = 3.0) -> pd.DataFrame:
     """
     Elimina filas cuyo precio se aleja más de N desviaciones estándar
     de la media de su categoría.
  
-    FÓRMULA:
-        Li = mu - (threshold * sigma)
-        Ls = mu + (threshold * sigma)
-        Precio válido si: Li <= precio <= Ls
+    FÓRMULA IMPLEMENTADA:
+        Límite inferior: Li = μ - (threshold × σ)
+        Límite superior: Ls = μ + (threshold × σ)
+        Precio válido si: Li ≤ precio ≤ Ls
  
-    PROHIBIDO : if precio < 10
-    CORRECTO  : filtro estadístico formal por categoría
+    ❌ PROHIBIDO usar: if precio < 10 (condicional arbitrario)
+    ✅ CORRECTO usar: la fórmula estadística formal por categoría
  
     Parámetros:
-        df        (pd.DataFrame): DataFrame con 'price', 'precio_media', 'precio_std'.
-        threshold (float)       : Número de sigmas para el rango válido. Default: 3.0
+        df        (pd.DataFrame): DataFrame con columnas 'price',
+                                  'precio_media' y 'precio_std'.
+        threshold (float)       : Número de desviaciones estándar
+                                  para definir el rango válido.
+                                  Por defecto: 3.0 (μ ± 3σ)
  
     Retorna:
-        pd.DataFrame: DataFrame sin outliers.
+        pd.DataFrame: DataFrame sin outliers de precio.
     """
  
-    print(f"\nAplicando filtro mu +- {threshold}*sigma por categoría...")
+    print(f"\n🔍 Aplicando filtro de outliers con threshold = {threshold}σ...")
+    print(f"   Fórmula: precio válido si μ - {threshold}σ ≤ precio ≤ μ + {threshold}σ")
  
     filas_antes = len(df)
  
-    # Límite inferior: mu - 3*sigma
+    # ── Calcular límites inferior y superior por fila ─────────────────────────
+    # Cada fila ya tiene su μ y σ correspondiente a su categoría (del merge anterior)
+ 
+    # Límite inferior: μ - 3σ
     limite_inferior = df["precio_media"] - (threshold * df["precio_std"])
  
-    # Límite superior: mu + 3*sigma
+    # Límite superior: μ + 3σ
     limite_superior = df["precio_media"] + (threshold * df["precio_std"])
  
-    # Máscara booleana: True = precio válido, False = outlier
-    mascara_validos = (
-        (df["price"] >= limite_inferior) &
-        (df["price"] <= limite_superior)
-    )
+    # ── Crear máscara booleana: True = precio válido, False = outlier ─────────
+    # Un precio es válido si está DENTRO del rango [Li, Ls]
+    mascara_validos = (df["price"] >= limite_inferior) & (df["price"] <= limite_superior)
  
-    # Mostrar ejemplos de outliers para verificación visual
-    outliers = df[~mascara_validos]
+    # ── Identificar outliers para el reporte ─────────────────────────────────
+    outliers = df[~mascara_validos]  # ~ invierte la máscara: True donde era False
+ 
+    print(f"\n   Ejemplos de outliers eliminados:")
     if len(outliers) > 0:
-        print(f"\n   Ejemplos de outliers eliminados (precios más extremos):")
-        extremos = outliers.nlargest(5, "price")[
-            ["product_name", "category", "price", "precio_media", "precio_std"]
-        ]
+        # Mostramos los 5 outliers más extremos para verificar visualmente
+        extremos = outliers.nlargest(5, "price")[["product_name", "category", "price", "precio_media", "precio_std"]]
         for _, row in extremos.iterrows():
-            li     = row["precio_media"] - threshold * row["precio_std"]
-            ls     = row["precio_media"] + threshold * row["precio_std"]
-            nombre = str(row["product_name"])[:35]
-            print(f"   · {nombre:<35} precio={row['price']:>10.2f}  rango=[{li:.2f}, {ls:.2f}]")
+            li = row["precio_media"] - threshold * row["precio_std"]
+            ls = row["precio_media"] + threshold * row["precio_std"]
+            print(f"   · {str(row['product_name'])[:40]:<40} precio={row['price']:>10.2f}  rango=[{li:.2f}, {ls:.2f}]")
  
-    # Aplicar filtro — conservar solo filas donde la máscara es True
+    # ── Aplicar el filtro — solo conservamos filas donde la máscara es True ───
     df_limpio = df[mascara_validos].copy()
  
-    filas_despues       = len(df_limpio)
+    filas_despues   = len(df_limpio)
     outliers_eliminados = filas_antes - filas_despues
-    porcentaje          = (outliers_eliminados / filas_antes) * 100
+    porcentaje      = (outliers_eliminados / filas_antes) * 100
  
-    print(f"\n   Resultado del filtro:")
+    print(f"\n   📊 Resultado del filtro:")
     print(f"   · Filas antes del filtro  : {filas_antes:>10,}")
     print(f"   · Outliers eliminados     : {outliers_eliminados:>10,}  ({porcentaje:.2f}%)")
     print(f"   · Filas después del filtro: {filas_despues:>10,}")
@@ -350,64 +355,74 @@ def eliminar_outliers(df: pd.DataFrame, threshold: float = 3.0) -> pd.DataFrame:
     return df_limpio
  
  
-# ------------------------------------------------------------------------------
+# ──────────────────────────────────────────────────────────────────────────────
 # FUNCIÓN 5: guardar_resultado
-# ------------------------------------------------------------------------------
+# Responsabilidad: exportar el CSV limpio al directorio de procesados
+# ──────────────────────────────────────────────────────────────────────────────
+ 
 def guardar_resultado(df: pd.DataFrame, ruta_salida: str) -> None:
     """
-    Guarda el DataFrame limpio como CSV eliminando columnas auxiliares
-    que fueron usadas solo para el cálculo estadístico.
+    Guarda el DataFrame limpio como CSV en la ruta especificada.
+ 
+    Elimina las columnas auxiliares de estadísticas (precio_media, precio_std)
+    antes de exportar, ya que son columnas de trabajo, no del dataset final.
  
     Parámetros:
         df          (pd.DataFrame): DataFrame limpio sin outliers.
-        ruta_salida (str)         : Ruta de salida del CSV.
+        ruta_salida (str)         : Ruta donde se guardará el CSV.
     """
  
-    print(f"\nGuardando dataset limpio...")
+    print(f"\n💾 Guardando dataset limpio...")
  
-    # Crear directorio si no existe — exist_ok=True evita error si ya existe
+    # ── Crear el directorio si no existe ─────────────────────────────────────
     os.makedirs(os.path.dirname(ruta_salida), exist_ok=True)
+    # exist_ok=True evita error si la carpeta ya existe
  
-    # Eliminar columnas auxiliares del cálculo (no pertenecen al dataset final)
-    df_exportar = df.drop(columns=["precio_media", "precio_std"], errors="ignore")
+    # ── Eliminar columnas auxiliares de estadísticas ──────────────────────────
+    # Estas columnas fueron útiles para el cálculo pero no pertenecen al dataset final
+    columnas_auxiliares = ["precio_media", "precio_std"]
+    df_exportar = df.drop(columns=columnas_auxiliares, errors="ignore")
  
-    # index=False evita que pandas agregue columna extra de números
+    # ── Guardar como CSV sin el índice de pandas ──────────────────────────────
+    # index=False evita que pandas agregue una columna extra de números
     df_exportar.to_csv(ruta_salida, index=False, encoding="utf-8")
  
-    print(f"   Guardado en    : {ruta_salida}")
-    print(f"   Total productos: {len(df_exportar):,}")
-    print(f"   Columnas       : {', '.join(df_exportar.columns.tolist())}")
+    print(f"   ✅ Dataset guardado en: {ruta_salida}")
+    print(f"   ✅ Total de productos limpios: {len(df_exportar):,}")
+    print(f"   ✅ Columnas exportadas: {', '.join(df_exportar.columns.tolist())}")
  
  
-# ------------------------------------------------------------------------------
+# ──────────────────────────────────────────────────────────────────────────────
 # PUNTO DE ENTRADA PRINCIPAL
 # Este bloque solo se ejecuta cuando corres el script directamente:
 #   python src/01_outlier_cleaning.py
-# NO se ejecuta si otro módulo importa las funciones de este archivo
-# ------------------------------------------------------------------------------
+# NO se ejecuta si otro script importa las funciones de este módulo
+# ──────────────────────────────────────────────────────────────────────────────
+ 
 if __name__ == "__main__":
  
     print("=" * 70)
-    print("  NeuralPricer -- PR #1: Limpieza Estadística de Outliers")
-    print("  Grupo Almerco | Fórmula: sigma = sqrt(sum(xi - mu)^2 / N)")
+    print("  NeuralPricer — PR #1: Limpieza Estadística de Outliers")
+    print("  Grupo Almerco | Fórmula: σ = √(Σ(xᵢ - μ)² / N)")
     print("=" * 70)
  
-    # PASO 1 — Cargar y validar columnas (RF-01)
+    # ── PASO 1: Cargar el dataset y validar columnas (RF-01) ──────────────────
     df = cargar_dataset(DATA_RAW_PATH)
  
-    # PASO 2 — Normalizar nombres de columnas y tipos de datos
+    # ── PASO 2: Normalizar nombres de columnas ────────────────────────────────
     df = normalizar_columnas(df)
  
-    # PASO 3 — Calcular mu y sigma por categoría con fórmula formal
+    # ── PASO 3: Calcular μ y σ por categoría (fórmula formal) ────────────────
     df = calcular_estadisticas_por_categoria(df)
  
-    # PASO 4 — Eliminar outliers con mu +- 3*sigma (RF-02)
+    # ── PASO 4: Eliminar outliers con el rango μ ± 3σ (RF-02) ────────────────
     df_limpio = eliminar_outliers(df, threshold=OUTLIER_THRESHOLD)
  
-    # PASO 5 — Guardar CSV limpio
+    # ── PASO 5: Guardar el dataset limpio ────────────────────────────────────
     guardar_resultado(df_limpio, DATA_PROCESSED_PATH)
  
     print("\n" + "=" * 70)
-    print("  PR #1 completado exitosamente")
-    print(f"  Output: {DATA_PROCESSED_PATH}")
+    print("  ✅ PR #1 completado exitosamente")
+    print(f"  📁 Output: {DATA_PROCESSED_PATH}")
     print("=" * 70 + "\n")
+ 
