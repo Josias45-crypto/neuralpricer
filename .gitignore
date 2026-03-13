@@ -36,3 +36,10 @@ Thumbs.db
 logs/
 tmp/
 temp/
+# Permitir .gitkeep para mantener estructura de carpetas
+!data/
+!data/**/.gitkeep
+!outputs/models/
+!outputs/models/.gitkeep
+!outputs/data/
+!outputs/data/.gitkeep
