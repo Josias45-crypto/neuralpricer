@@ -1,4 +1,5 @@
 # 🧠 NeuralPricer
+
 > Sistema ML de radar de precios: limpieza estadística, agrupamiento NLP y predicción con redes neuronales.
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
@@ -14,9 +15,11 @@
 **NeuralPricer** es un sistema de inteligencia de precios desarrollado para **Grupo Almerco**. Analiza miles de productos tecnológicos de la competencia (datos públicos), detecta anomalías en los precios y agrupa productos idénticos con nombres distintos mediante procesamiento de lenguaje natural (NLP).
 
 ### Problema que resuelve
+
 El área de ventas de Grupo Almerco necesita ajustar sus precios basándose en la **media real del mercado**, no en suposiciones. Sin un sistema automatizado, los analistas revisan precios manualmente, perdiendo tiempo y cometiendo errores. NeuralPricer automatiza este proceso con matemáticas formales y Machine Learning.
 
 ### Impacto esperado
+
 - Maximizar el margen de ganancia sin perder competitividad
 - Detectar automáticamente precios basura en el mercado (`S/1.00` o `S/99,999`)
 - Emparejar productos con nombres distintos que son físicamente el mismo artículo
@@ -71,36 +74,30 @@ CSV Kaggle (origen de datos)
 neuralpricer/
 │
 ├── data/                        # Datasets (NO se suben a GitHub)
-│   ├── raw/                     # CSV original de Kaggle sin modificar
-│   └── processed/               # CSVs limpios generados por los scripts
-│
-├── notebooks/                   # Exploración y análisis (Jupyter)
-│   ├── 01_exploracion_inicial.ipynb
-│   ├── 02_visualizacion_gauss.ipynb
-│   └── 03_analisis_clustering.ipynb
+│   ├── raw/                     # ← Coloca aquí el electronics.csv de Kaggle
+│   └── processed/               # ← Generado automáticamente por PR #1
 │
 ├── src/                         # Código fuente de producción
-│   ├── __init__.py
 │   ├── 01_outlier_cleaning.py   # PR #1 — Limpieza estadística
 │   ├── 02_visualization.py      # PR #2 — Visualización Gauss
 │   ├── 03_tfidf_matrix.py       # PR #3 — Matriz TF-IDF
 │   ├── 04_clustering.py         # PR #4 — Clustering no supervisado
 │   └── 05_neural_network.py     # PR #5 — Red neuronal predictora
 │
-├── outputs/                     # Resultados generados (gráficos, CSVs)
-│   ├── plots/                   # Gráficos de distribución y boxplots
-│   ├── models/                  # Modelos entrenados (.h5, .pkl)
-│   └── data/                    # CSVs con clusters y predicciones
-│
-├── tests/                       # Tests unitarios por módulo
-│   └── test_outlier_cleaning.py
+├── outputs/                     # Resultados generados (NO se suben a GitHub)
+│   ├── plots/                   # ← Gráficos generados por PR #2
+│   ├── models/                  # ← Modelos entrenados por PR #5 (.h5, .pkl)
+│   └── data/                    # ← Matrices y CSVs generados por PR #3 y PR #4
 │
 ├── .env.example                 # Variables de entorno (plantilla)
 ├── .gitignore                   # Excluye data/, __pycache__, .env, models
 ├── requirements.txt             # Dependencias del proyecto
-├── setup.py                     # Instalación como paquete Python
 └── README.md                    # Este archivo
 ```
+
+> **Nota:** Las carpetas `data/` y `outputs/` no se suben a GitHub pero su estructura
+> está preservada con archivos `.gitkeep`. Al clonar el repositorio las carpetas
+> ya existen — solo necesitas agregar el dataset CSV.
 
 ---
 
@@ -108,27 +105,28 @@ neuralpricer/
 
 > **Regla de trabajo:** No se fusionará ningún código si no se demuestra el cálculo matemático detrás de las funciones.
 
-| PR | Módulo | Foco | Estado |
-|----|--------|------|--------|
-| [PR #1](../../pull/1) | `01_outlier_cleaning.py` | Pandas, NumPy, Estadística | 🔲 Pendiente |
-| [PR #2](../../pull/2) | `02_visualization.py` | Matplotlib, Seaborn | 🔲 Pendiente |
-| [PR #3](../../pull/3) | `03_tfidf_matrix.py` | NLTK, SciPy, Vectores | 🔲 Pendiente |
-| [PR #4](../../pull/4) | `04_clustering.py` | Scikit-learn | 🔲 Pendiente |
-| [PR #5](../../pull/5) | `05_neural_network.py` | TensorFlow, Keras | 🔲 Pendiente |
+| PR                    | Módulo                   | Foco                       | Estado        |
+| --------------------- | ------------------------ | -------------------------- | ------------- |
+| [PR #1](../../pull/1) | `01_outlier_cleaning.py` | Pandas, NumPy, Estadística | ✅ Completado |
+| [PR #2](../../pull/2) | `02_visualization.py`    | Matplotlib, Seaborn        | ✅ Completado |
+| [PR #3](../../pull/3) | `03_tfidf_matrix.py`     | NLTK, SciPy, Vectores      | ✅ Completado |
+| [PR #4](../../pull/4) | `04_clustering.py`       | Scikit-learn               | 🔲 Pendiente  |
+| [PR #5](../../pull/5) | `05_neural_network.py`   | TensorFlow, Keras          | 🔲 Pendiente  |
 
 ---
 
 ## ⚙️ Instalación y Configuración
 
 ### Prerequisitos
+
 - Python 3.10 o superior
-- pip o conda
+- pip
 - Git
 
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/tu-usuario/neuralpricer.git
+git clone https://github.com/Josias45-crypto/neuralpricer.git
 cd neuralpricer
 ```
 
@@ -154,34 +152,56 @@ pip install -r requirements.txt
 
 ```bash
 cp .env.example .env
-# Editar .env con tus rutas locales
+# Editar .env con tus rutas locales si es necesario
 ```
 
 ### 5. Descargar el dataset de Kaggle
 
-Ingresar a [Kaggle](https://www.kaggle.com) y descargar uno de los siguientes datasets:
+Descarga el dataset oficial usado en este proyecto:
 
-| Dataset | URL | Filas aprox. |
-|---------|-----|--------------|
-| Amazon Electronics Products Sales | [Ver en Kaggle](https://www.kaggle.com/datasets/edusanketdk/electronics) | 1.2M |
-| Amazon Products Dataset | [Ver en Kaggle](https://www.kaggle.com/datasets/joyshil0599/a-comprehensive-dataset-of-100k-amazon-products) | 100K |
+| Dataset                                | URL                                                                                    | Productos |
+| -------------------------------------- | -------------------------------------------------------------------------------------- | --------- |
+| Datafiniti Electronic Products Pricing | [Ver en Kaggle](https://www.kaggle.com/datasets/datafiniti/electronic-products-prices) | ~5,400    |
 
-El archivo CSV debe contener mínimo estas columnas:
+El archivo CSV debe contener estas columnas:
 
-| Columna requerida | Descripción |
-|-------------------|-------------|
-| `product_name` | Nombre del producto |
-| `price` | Precio numérico |
-| `brand` | Marca del fabricante |
-| `category` | Categoría del producto |
+| Columna en CSV | Columna estándar | Descripción            |
+| -------------- | ---------------- | ---------------------- |
+| `name`         | `product_name`   | Nombre del producto    |
+| `price`        | `price`          | Precio numérico        |
+| `brand`        | `brand`          | Marca del fabricante   |
+| `categories`   | `category`       | Categoría del producto |
 
-Colocar el CSV descargado en: `data/raw/products.csv`
+**Renombrar el archivo a `electronics.csv` y colocarlo en `data/raw/electronics.csv`**
+
+---
+
+## 🚀 Ejecución
+
+Ejecutar los scripts en orden — cada uno depende del anterior:
+
+```bash
+# PR #1 — Limpieza de outliers → genera data/processed/clean.csv
+python src/01_outlier_cleaning.py
+
+# PR #2 — Visualización → genera outputs/plots/*.png
+python src/02_visualization.py
+
+# PR #3 — Matriz TF-IDF → genera outputs/data/tfidf_matrix.npz
+python src/03_tfidf_matrix.py
+
+# PR #4 — Clustering (próximamente)
+python src/04_clustering.py
+
+# PR #5 — Red neuronal (próximamente)
+python src/05_neural_network.py
+```
 
 ---
 
 ## 📐 Fundamentos Matemáticos
 
-Cada PR documenta en el código la fórmula matemática que respalda su lógica. Resumen:
+Cada PR documenta en el código la fórmula matemática que respalda su lógica.
 
 ### PR #1 — Desviación estándar por categoría
 
@@ -193,7 +213,7 @@ Se elimina toda fila cuyo precio se encuentre fuera del rango $[\mu - 3\sigma,\ 
 
 $$\text{similitud}(A, B) = \frac{A \cdot B}{\|A\| \cdot \|B\|}$$
 
-Dos nombres de producto son el mismo artículo físico si su similitud coseno supera el umbral definido.
+Dos nombres de producto son el mismo artículo físico si su similitud coseno supera el umbral definido en `.env`.
 
 ### PR #5 — Regresión con red neuronal secuencial
 
@@ -204,66 +224,15 @@ Salida: precio óptimo de venta $\hat{y}$
 
 ---
 
-## 🚀 Uso
-
-### Ejecutar limpieza de outliers (PR #1)
-
-```bash
-python src/01_outlier_cleaning.py --input data/raw/products.csv --output data/processed/clean.csv
-```
-
-### Generar visualizaciones (PR #2)
-
-```bash
-python src/02_visualization.py --input data/processed/clean.csv --output outputs/plots/
-```
-
-### Construir matriz TF-IDF (PR #3)
-
-```bash
-python src/03_tfidf_matrix.py --input data/processed/clean.csv --output outputs/data/tfidf_matrix.npz
-```
-
-### Ejecutar clustering (PR #4)
-
-```bash
-python src/04_clustering.py --input outputs/data/tfidf_matrix.npz --output outputs/data/clustered.csv
-```
-
-### Entrenar red neuronal (PR #5)
-
-```bash
-python src/05_neural_network.py --input outputs/data/clustered.csv --output outputs/models/neuralpricer.h5
-```
-
----
-
 ## 🔁 Flujo de Trabajo Git
 
 ```
 main              ← código aprobado y estable
-  └── develop     ← integración diaria
-        ├── feature/pr1-outlier-cleaning
-        ├── feature/pr2-visualization
-        ├── feature/pr3-tfidf-matrix
-        ├── feature/pr4-clustering
-        └── feature/pr5-neural-network
-```
-
-### Crear una rama para un PR
-
-```bash
-git checkout develop
-git checkout -b feature/pr1-outlier-cleaning
-```
-
-### Enviar un Pull Request
-
-```bash
-git add src/01_outlier_cleaning.py
-git commit -m "feat(pr1): limpieza de outliers con μ ± 3σ por categoría"
-git push origin feature/pr1-outlier-cleaning
-# Abrir PR en GitHub hacia develop
+  ├── feature/pr1-outlier-cleaning   ✅
+  ├── feature/pr2-visualization      ✅
+  ├── feature/pr3-tfidf-matrix       ✅
+  ├── feature/pr4-clustering         🔲
+  └── feature/pr5-neural-network     🔲
 ```
 
 ### Convención de commits
@@ -272,14 +241,14 @@ git push origin feature/pr1-outlier-cleaning
 feat(pr1): descripción del cambio
 fix(pr2): corrección en gráfico de distribución
 docs(readme): actualizar instrucciones de instalación
-test(pr1): agregar test para categoría vacía
+chore: agregar .gitkeep para estructura de carpetas
 ```
 
 ---
 
 ## 📦 Dependencias
 
-```txt
+```
 pandas>=2.0.0
 numpy>=1.24.0
 matplotlib>=3.7.0
@@ -294,50 +263,22 @@ jupyter>=1.0.0
 
 ---
 
-## 🧪 Tests
-
-```bash
-# Ejecutar todos los tests
-python -m pytest tests/ -v
-
-# Ejecutar test específico
-python -m pytest tests/test_outlier_cleaning.py -v
-```
-
----
-
 ## 🤝 Contribución
 
 1. Hacer fork del repositorio
-2. Crear una rama: `git checkout -b feature/pr1-outlier-cleaning`
+2. Crear una rama: `git checkout -b feature/pr4-clustering`
 3. **Documentar la fórmula matemática** en el código antes de hacer commit
-4. Hacer commit: `git commit -m "feat(pr1): descripción"`
-5. Hacer push: `git push origin feature/pr1-outlier-cleaning`
-6. Abrir un Pull Request hacia `develop`
+4. Hacer commit: `git commit -m "feat(pr4): descripción"`
+5. Hacer push: `git push origin feature/pr4-clustering`
+6. Abrir un Pull Request hacia `main`
 
 > ⚠️ **Regla:** Ningún PR será aprobado si el código no incluye la demostración matemática de cada función implementada.
-
----
-
-## 👥 Equipo
-
-| Rol | Responsabilidad |
-|-----|----------------|
-| ML Engineer | Scripts PR #1 al #5 |
-| Data Analyst | Validación de datasets y outputs |
-| Tech Lead | Revisión de PRs y merge a main |
 
 ---
 
 ## 🏢 Contexto Empresarial
 
 Proyecto desarrollado para el área de ventas de **Grupo Almerco**. El objetivo final es que el equipo comercial pueda consultar el precio óptimo de cualquier producto tecnológico ingresando únicamente su marca, categoría y clúster de mercado.
-
----
-
-## 📄 Licencia
-
-Este proyecto está bajo la licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
 
 ---
 
