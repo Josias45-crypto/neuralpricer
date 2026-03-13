@@ -87,17 +87,14 @@ OUTLIER_THRESHOLD   = float(os.getenv("OUTLIER_THRESHOLD", "3"))  # El "3" de μ
 # El dataset DEBE contener estas 4 columnas mínimas para que el sistema funcione
 # ──────────────────────────────────────────────────────────────────────────────
  
-COLUMNAS_REQUERIDAS = ["name", "prices.amountMax", "brand", "categories"]
- 
-# Mapeo de nombres del CSV original → nombres estándar del proyecto
-# El dataset de Kaggle usa nombres distintos a los del documento
+COLUMNAS_REQUERIDAS = ["name", "price", "brand", "categories"]
+
 MAPEO_COLUMNAS = {
-    "name"              : "product_name",  # Nombre del producto
-    "prices.amountMax"  : "price",         # Precio máximo listado
-    "brand"             : "brand",         # Marca del fabricante
-    "categories"        : "category",      # Categoría del producto
+    "name"       : "product_name",
+    "price"      : "price",
+    "brand"      : "brand",
+    "categories" : "category",
 }
- 
  
 # ──────────────────────────────────────────────────────────────────────────────
 # FUNCIÓN 1: cargar_dataset
