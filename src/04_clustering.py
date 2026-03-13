@@ -478,7 +478,7 @@ def guardar_resultado(df: pd.DataFrame, kmeans: KMeans, ruta_salida: str) -> pd.
     df["cluster_id"] = kmeans.labels_
 
     # Reordenar columnas para que cluster_id sea visible al inicio
-    columnas = ["cluster_id", "product_name", "price", "brand", "category"]
+    columnas = ["cluster_id", "product_name", "price", "brand", "category", "manufacturer", "primary_category"]
     df = df[columnas]
 
     # Crear directorio si no existe

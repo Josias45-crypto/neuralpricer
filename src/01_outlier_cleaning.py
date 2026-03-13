@@ -4,7 +4,7 @@ NeuralPricer — PR #1: Limpieza Estadística de Outliers
 ================================================================================
 Proyecto  : NeuralPricer — Radar de Precios de Mercado
 Cliente   : Grupo Almerco
-Autor     : [Tu nombre]
+Autor     : Josiassssssssss
 Fecha     : Marzo 2026
 PR        : #1
 --------------------------------------------------------------------------------
@@ -87,13 +87,15 @@ OUTLIER_THRESHOLD   = float(os.getenv("OUTLIER_THRESHOLD", "3"))  # El "3" de μ
 # El dataset DEBE contener estas 4 columnas mínimas para que el sistema funcione
 # ──────────────────────────────────────────────────────────────────────────────
  
-COLUMNAS_REQUERIDAS = ["name", "price", "brand", "categories"]
+COLUMNAS_REQUERIDAS = ["name", "price", "brand", "categories", "manufacturer", "primaryCategories"]
 
 MAPEO_COLUMNAS = {
-    "name"       : "product_name",
-    "price"      : "price",
-    "brand"      : "brand",
-    "categories" : "category",
+    "name"              : "product_name",
+    "price"             : "price",
+    "brand"             : "brand",
+    "categories"        : "category",
+    "manufacturer"      : "manufacturer",
+    "primaryCategories" : "primary_category",
 }
  
 # ──────────────────────────────────────────────────────────────────────────────
