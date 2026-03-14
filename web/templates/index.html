@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuralPricer — Grupo Almerco</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <span class="logo-icon">⬡</span>
+            <div>
+                <div class="logo-title">NeuralPricer</div>
+                <div class="logo-sub">Grupo Almerco</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#dashboard" class="nav-item active" onclick="setActive(this)">
+                <span class="nav-icon">◈</span><span>Dashboard</span>
+            </a>
+            <a href="#predictor" class="nav-item" onclick="setActive(this)">
+                <span class="nav-icon">◎</span><span>Predictor</span>
+            </a>
+            <a href="#graficos" class="nav-item" onclick="setActive(this)">
+                <span class="nav-icon">◻</span><span>Gráficos</span>
+            </a>
+            <a href="#clusters" class="nav-item" onclick="setActive(this)">
+                <span class="nav-icon">◉</span><span>Clústeres</span>
+            </a>
+            <a href="#similares" class="nav-item" onclick="setActive(this)">
+                <span class="nav-icon">⬡</span><span>Similares</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="status-dot"></div>
+            <span>Sistema activo</span>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header class="top-header">
+            <div class="header-left">
+                <h1 class="page-title">Radar de Precios</h1>
+                <p class="page-sub">Inteligencia de mercado en tiempo real</p>
+            </div>
+            <div class="header-right">
+                <div class="model-badge">
+                    <span class="badge-dot"></span>
+                    Modelo activo — R² 0.6889
+                </div>
+            </div>
+        </header>
+
+        <!-- DASHBOARD -->
+        <section id="dashboard" class="section">
+            <div class="section-label">01 — DASHBOARD</div>
+            <h2 class="section-title">Métricas del Sistema</h2>
+            <div class="metrics-grid" id="metrics-grid">
+                <div class="metric-card" id="card-productos">
+                    <div class="metric-value loading">—</div>
+                    <div class="metric-label">Productos analizados</div>
+                    <div class="metric-sub">Dataset limpio μ ± 3σ</div>
+                </div>
+                <div class="metric-card accent" id="card-r2">
+                    <div class="metric-value loading">—</div>
+                    <div class="metric-label">R² del modelo</div>
+                    <div class="metric-sub">Varianza explicada</div>
+                </div>
+                <div class="metric-card" id="card-mae">
+                    <div class="metric-value loading">—</div>
+                    <div class="metric-label">Error promedio (MAE)</div>
+                    <div class="metric-sub">En dólares USD</div>
+                </div>
+                <div class="metric-card" id="card-clusters">
+                    <div class="metric-value loading">—</div>
+                    <div class="metric-label">Clústeres K-Means</div>
+                    <div class="metric-sub">Grupos detectados</div>
+                </div>
+                <div class="metric-card" id="card-marcas">
+                    <div class="metric-value loading">—</div>
+                    <div class="metric-label">Marcas únicas</div>
+                    <div class="metric-sub">En el mercado</div>
+                </div>
+                <div class="metric-card" id="card-precio-avg">
+                    <div class="metric-value loading">—</div>
+                    <div class="metric-label">Precio promedio μ</div>
+                    <div class="metric-sub">Media del mercado</div>
+                </div>
+            </div>
+            <div class="pipeline">
+                <div class="pipeline-title">Pipeline ML — 5 Pull Requests</div>
+                <div class="pipeline-steps">
+                    <div class="step done"><div class="step-num">PR1</div><div class="step-name">Outliers μ±3σ</div></div>
+                    <div class="step-arrow">→</div>
+                    <div class="step done"><div class="step-num">PR2</div><div class="step-name">Visualización</div></div>
+                    <div class="step-arrow">→</div>
+                    <div class="step done"><div class="step-num">PR3</div><div class="step-name">TF-IDF</div></div>
+                    <div class="step-arrow">→</div>
+                    <div class="step done"><div class="step-num">PR4</div><div class="step-name">K-Means</div></div>
+                    <div class="step-arrow">→</div>
+                    <div class="step done"><div class="step-num">PR5</div><div class="step-name">Red Neuronal</div></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PREDICTOR -->
+        <section id="predictor" class="section">
+            <div class="section-label">02 — PREDICTOR</div>
+            <h2 class="section-title">Precio Óptimo de Mercado</h2>
+            <p class="section-desc">
+                Selecciona la marca, categoría y clúster del producto.
+                El sistema predecirá el precio óptimo basándose en 5,412 productos analizados.
+            </p>
+            <div class="predictor-layout">
+                <div class="predictor-form">
+                    <div class="form-group">
+                        <label class="form-label">Marca</label>
+                        <select class="form-select" id="select-marca">
+                            <option value="">Cargando marcas...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Categoría</label>
+                        <select class="form-select" id="select-categoria">
+                            <option value="">Cargando categorías...</option>
+                        </select>
+                        <div class="form-hint">Al elegir una categoría verás su gráfico de precios abajo</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Clúster de Mercado</label>
+                        <select class="form-select" id="select-cluster">
+                            <option value="">Cargando clústeres...</option>
+                        </select>
+                        <div class="form-hint">Cada clúster muestra la marca líder y precio promedio</div>
+                    </div>
+                    <button class="btn-predict" id="btn-predict" onclick="predecirPrecio()">
+                        <span class="btn-icon">◎</span>
+                        Predecir Precio Óptimo
+                    </button>
+                </div>
+
+                <div class="predictor-result" id="resultado-container">
+                    <div class="result-empty" id="result-empty">
+                        <div class="result-empty-icon">◈</div>
+                        <div>Selecciona un producto para ver la predicción</div>
+                    </div>
+                    <div class="result-data" id="result-data" style="display:none">
+                        <div class="result-label">Precio Óptimo Sugerido</div>
+                        <div class="result-price" id="result-price">$0.00</div>
+                        <div class="result-range">
+                            Rango: <span id="result-range-min">$0</span> — <span id="result-range-max">$0</span>
+                        </div>
+                        <div class="result-confidence">
+                            Confianza del modelo: <strong id="result-confianza">69%</strong>
+                        </div>
+                        <div class="result-divider"></div>
+                        <div class="result-similares-title">Productos similares en clúster</div>
+                        <div id="result-similares-list"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- GRÁFICOS DINÁMICOS -->
+        <section id="graficos" class="section">
+            <div class="section-label">03 — GRÁFICOS</div>
+            <h2 class="section-title">Análisis Visual en Tiempo Real</h2>
+            <p class="section-desc">
+                Los gráficos se generan automáticamente al seleccionar una categoría o clúster en el Predictor.
+                Muestran la distribución real de precios del mercado.
+            </p>
+
+            <!-- Gráfico por categoría -->
+            <div class="grafico-section">
+                <div class="grafico-titulo">
+                    <span class="grafico-badge">Categoría</span>
+                    Distribución de Precios
+                </div>
+                <div id="grafico-categoria" class="grafico-contenedor">
+                    <div class="grafico-placeholder">
+                        <div class="grafico-placeholder-icon">◻</div>
+                        <div>Selecciona una categoría en el Predictor para ver su análisis</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico por clúster -->
+            <div class="grafico-section" style="margin-top: 32px">
+                <div class="grafico-titulo">
+                    <span class="grafico-badge">Clúster</span>
+                    Distribución y Top Marcas
+                </div>
+                <div id="grafico-cluster" class="grafico-contenedor">
+                    <div class="grafico-placeholder">
+                        <div class="grafico-placeholder-icon">◉</div>
+                        <div>Selecciona un clúster en el Predictor o haz click en una tarjeta de Clústeres</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CLÚSTERES -->
+        <section id="clusters" class="section">
+            <div class="section-label">04 — CLUSTERING</div>
+            <h2 class="section-title">Distribución K-Means</h2>
+            <p class="section-desc">
+                K=10 clústeres descubiertos automáticamente. Haz click en cualquier tarjeta para ver su gráfico.
+            </p>
+            <div class="clusters-grid" id="clusters-grid">
+                <div class="loading-msg">Cargando clústeres...</div>
+            </div>
+        </section>
+
+        <!-- SIMILARES -->
+        <section id="similares" class="section">
+            <div class="section-label">05 — TF-IDF</div>
+            <h2 class="section-title">Productos Similares Detectados</h2>
+            <p class="section-desc">
+                Pares detectados con distancia coseno entre vectores TF-IDF.
+                Productos con nombres distintos pero que son el mismo artículo físico.
+            </p>
+            <div class="similares-table-wrap">
+                <table class="similares-table">
+                    <thead>
+                        <tr>
+                            <th>Producto A</th>
+                            <th>Producto B</th>
+                            <th>Similitud</th>
+                            <th>Distancia coseno</th>
+                        </tr>
+                    </thead>
+                    <tbody id="similares-tbody">
+                        <tr><td colspan="4" class="loading-msg">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
